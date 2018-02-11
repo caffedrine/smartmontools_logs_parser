@@ -1,1 +1,3 @@
-# smartmontools_logs_parser
+# Smartmontools Logs Parser
+
+Convert smartmontools output logs to INI format :)
