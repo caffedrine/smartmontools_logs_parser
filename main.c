@@ -3,6 +3,8 @@
 #include <string.h>
 #include <ctype.h>
 
+#define MAX_ELEMENTS 50
+
 // Param structure
 typedef struct
 {
@@ -105,7 +107,12 @@ int main(int argc, char *argv[])
     printf("[General Information]\n");
     /// Read General Information
     /*******************************************************************************************/
-    Param general_information_array[22]; // An array with 22 params
+    Param general_information_array[MAX_ELEMENTS]; // An array with 22 params
+    for(int i=0; i < MAX_ELEMENTS; i++)
+    {
+        strcpy(general_information_array[i].name, "");
+        strcpy(general_information_array[i].value, "");
+    }
     
     // Now proceed with reading lines which contains general information
     char line[256];
@@ -115,7 +122,10 @@ int main(int argc, char *argv[])
     while(fgets(line, sizeof line,
                 file) != NULL) /* loop through every line from file in order to get necessery lines */
     {
-        if(validReads >= 22)
+        if(validReads >= MAX_ELEMENTS)
+            break;
+    
+        if(strstr(line, "General SMART Values") != NULL)    // if end of general information values is reached
             break;
         
         if(!foundHeader && !strstr(line, "=== START OF INFORMATION SECTION ===") != NULL)
@@ -123,9 +133,6 @@ int main(int argc, char *argv[])
             foundHeader = 1;
             continue;
         }
-        
-        if(strstr(line, "General SMART Values") != NULL)
-            break;
         
         if(strstr(line, ":") != NULL)
         {
@@ -160,14 +167,22 @@ int main(int argc, char *argv[])
     
     /// Smart ATTRIBTES
     /*******************************************************************************************/
-    Param smart_attributes[23];
+    Param smart_attributes[MAX_ELEMENTS];
+    for(int i=0; i < MAX_ELEMENTS; i++)
+    {
+        strcpy(smart_attributes[i].name, "");
+        strcpy(smart_attributes[i].value, "");
+    }
+    
     validReads = 0;
     foundHeader = 0;
     
-    while(fgets(line, sizeof line,
-                file) != NULL) /* loop through every line from file in order to get necessery lines */
+    while(fgets(line, sizeof line, file) != NULL) /* loop through every line from file */
     {
-        if(validReads >= 23)
+        if(validReads > MAX_ELEMENTS)
+            break;
+    
+        if(strstr(line, "_ K auto-keep") != NULL)   // if eand of smart atributes is reached
             break;
         
         if(!foundHeader)
@@ -180,9 +195,6 @@ int main(int argc, char *argv[])
             else
                 continue;
         }
-        
-        if(strstr(line, "|") != NULL)
-            break;
         
         // Prepare the line for split
         removeSubstring(line, "\n");
@@ -208,32 +220,36 @@ int main(int argc, char *argv[])
             removeSubstring(smart_attributes[validReads].name, " P");
         }
         
-        printf("%s\n", new);
-        
-        //continue;
-        
         // Get value
         char *tmp = strrchr(new, '-');
         strcpy(smart_attributes[validReads].value, substring(tmp, 1, strlen(tmp) - 1));
         
         // Debug
-        //printf("%s=%s\n", smart_attributes[validReads].name, smart_attributes[validReads].value);
+        printf("%s=%s\n", smart_attributes[validReads].name, smart_attributes[validReads].value);
         validReads++;
     }
-    //exit(1);
     
     printf("\n[Device Statistics]\n");
     
     /// Device statistics
     /*******************************************************************************************/
-    Param device_statistics[7];
+    Param device_statistics[MAX_ELEMENTS];      // Define array and initialize
+    for(int i=0; i < MAX_ELEMENTS; i++)
+    {
+        strcpy(device_statistics[i].name, "");
+        strcpy(device_statistics[i].value, "");
+    }
+    
     validReads = 0;
     foundHeader = 0;
     
     while(fgets(line, sizeof line,
                 file) != NULL) /* loop through every line from file in order to get necessery lines */
     {
-        if(validReads >= 7)
+        if(validReads > MAX_ELEMENTS)   // Stop if tehere is not space in array anymore!
+            break;
+    
+        if(strstr(line, "_ C monitored condition met") != NULL) // if end of statistics is reached
             break;
         
         if(!foundHeader)
@@ -249,9 +265,6 @@ int main(int argc, char *argv[])
         
         if(strstr(line, "=====") != NULL)
             continue;
-    
-        if(strstr(line, "|") != NULL)
-            break;
         
         // Prepare the line for split
         removeSubstring(line, "\n");
@@ -310,7 +323,7 @@ int main(int argc, char *argv[])
     int i=0;
     for(i=0; i < 22; i++)
     {
-        if(general_information_array[i].name != NULL)
+        if( strcmp(general_information_array[i].name, "") != 0 )
         {
             fprintf(fw, "%s=%s\n", general_information_array[i].name, general_information_array[i].value);
         }
@@ -319,14 +332,14 @@ int main(int argc, char *argv[])
     fprintf(fw, "\n[S.M.A.R.T. Attributes]\n");
     for(i=0; i < 23; i++)
     {
-        if(smart_attributes[i].name != NULL)
+        if(strcmp(smart_attributes[i].name, "") != 0 )
             fprintf(fw, "%s=%s\n", smart_attributes[i].name, smart_attributes[i].value);
     }
     
     fprintf(fw, "\n[Device Statistics]\n");
-    for(i=0; i < 7; i++)
+    for(i=0; i < MAX_ELEMENTS; i++)
     {
-        if(device_statistics[i].name != NULL)
+        if( strcmp(device_statistics[i].name, "") != 0 )
             fprintf(fw, "%s=%s\n", device_statistics[i].name, device_statistics[i].value);
     }
     
